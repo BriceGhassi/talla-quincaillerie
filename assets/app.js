@@ -277,6 +277,9 @@ function render() {
 }
 
 function bindViewEvents() {
+  document.querySelectorAll("[data-open-module]").forEach((button) => {
+    button.addEventListener("click", () => navigate(button.dataset.openModule));
+  });
   if (activeView === "pos") bindPOSEvents();
   if (activeView === "inventory") bindInventoryEvents();
   if (activeView === "production") bindProductionEvents();
@@ -299,6 +302,24 @@ function renderDashboard() {
       ${metric("Valeur du stock", money(stockValue))}
       ${metric("Alertes stock", lowStock)}
       ${metric("Ordres fabrication ouverts", productionOpen)}
+    </section>
+    <section class="panel">
+      <div class="toolbar">
+        <div>
+          <h2>Fonctionnalités du système</h2>
+          <p class="muted-text">Ces cartes montrent les modules disponibles dans le logiciel. Changez le rôle en haut à droite pour voir les accès de chaque utilisateur.</p>
+        </div>
+      </div>
+      <div class="feature-grid">
+        ${featureCard("Point de vente", "Vente au comptoir, panier, code-barres, paiement et ticket imprimable.", "pos")}
+        ${featureCard("Stocks", "Niveaux de stock, alertes minimum, valorisation et mouvements.", "inventory")}
+        ${featureCard("Fabrication", "Ordres de fabrication, nomenclatures, matières premières et produits finis.", "production")}
+        ${featureCard("Achats", "Réceptions fournisseurs et entrée automatique au dépôt.", "purchases")}
+        ${featureCard("Clients", "Création client, limite de crédit et suivi des ventes à crédit.", "customers")}
+        ${featureCard("Finance OHADA", "Journal simplifié, ventes, achats et export CSV.", "finance")}
+        ${featureCard("Ressources humaines", "Employés, heures de production et coûts de main-d'oeuvre.", "hr")}
+        ${featureCard("Administration", "Rôles, sites, accès et journal d'audit.", "admin")}
+      </div>
     </section>
     <section class="grid two">
       <div class="panel">
@@ -328,6 +349,22 @@ function renderDashboard() {
 
 function metric(label, value) {
   return `<div class="metric"><span>${label}</span><strong>${value}</strong></div>`;
+}
+
+function featureCard(title, description, viewId) {
+  const allowed = allowedNav().some((item) => item.id === viewId);
+  const roleLabel = roles.find((role) => role.code === activeRole)?.label || activeRole;
+  return `
+    <article class="feature-card">
+      <h3>${title}</h3>
+      <p>${description}</p>
+      ${
+        allowed
+          ? `<button class="secondary-button" type="button" data-open-module="${viewId}">Ouvrir</button>`
+          : `<span class="badge warn">Non disponible pour ${roleLabel}</span>`
+      }
+    </article>
+  `;
 }
 
 function renderAlerts() {

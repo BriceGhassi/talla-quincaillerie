@@ -1,4 +1,4 @@
-const CACHE_NAME = "qstock-atelier-v1";
+const CACHE_NAME = "talla-quincaillerie-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -39,4 +39,3 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
-
