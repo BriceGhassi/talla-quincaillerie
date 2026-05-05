@@ -1,58 +1,136 @@
 # Talla Quincaillerie
 
-Application de gestion complète pour Talla Quincaillerie, avec vente au
-comptoir, gestion de stock, achats, fabrication, finance, RH et fonctionnement
-offline-first multi-sites.
+Talla Quincaillerie est une application de gestion complète pour une
+quincaillerie avec activités de fabrication. Le système aide à gérer les ventes,
+les stocks, les achats, la production, les clients, les finances, les employés
+et les rapports depuis une interface simple en français.
 
-## Source Material Reviewed
+## Fonctionnalités principales
 
-- `C:\Users\kamga\Downloads\cahier_des_charges_quincaillerie.docx`
-- `C:\Users\kamga\Downloads\systeme_gestion_quincaillerie.docx`
-- `https://chatgpt.com/s/t_69f9ff4ef46881918f47fe277326d117`
+## Tableau de bord
 
-The shared ChatGPT architecture link was not accessible from the current
-execution environment, so the architecture below is derived from the two Word
-documents plus standard production patterns for offline-first retail systems.
+Le tableau de bord donne une vue rapide sur l'activité de la quincaillerie :
 
-## Extracted Requirements
+- chiffre d'affaires total ;
+- valeur estimée du stock ;
+- alertes de stock faible ;
+- ordres de fabrication ouverts ;
+- ventes récentes ;
+- opérations en attente de synchronisation.
 
-The documents require an integrated management system for a hardware store with
-manufacturing activities. The system must cover stock, production, sales,
-purchasing, accounting, HR, and reporting. It must be a web application with
-offline PWA support, security controls, performance suitable for SMEs, local
-database plus cloud synchronization, and support for unstable internet
-connections. It must support the following user profiles: Administrator, stock
-manager, production manager, cashier, accountant, and HR manager. Accounting
-must be compatible with OHADA constraints.
+## Point de vente
 
-## Deliverables
+Le module caisse permet de vendre rapidement au comptoir :
 
-- [System Architecture](docs/architecture.md)
-- [Functional Modules](docs/functional-modules.md)
-- [Database Schema](docs/database-schema.sql)
-- [REST API and Sync Specification](docs/openapi.yaml)
-- [Implementation and Deployment Guide](docs/implementation-guide.md)
-- [Environment Template](.env.example)
-- [Docker Compose Template](docker-compose.yml)
+- recherche d'articles par nom, SKU ou code-barres ;
+- ajout rapide des produits au panier ;
+- calcul automatique du sous-total, de la TVA et du total ;
+- choix du client ;
+- paiement en espèces, Mobile Money, carte ou crédit client ;
+- génération d'un ticket de caisse imprimable ;
+- diminution automatique du stock après chaque vente.
 
-## Application développée
+## Gestion des stocks
 
-Une première version complète et exploitable de l'application est fournie en
-français :
+Le système suit les mouvements de stock pour chaque article :
 
-- `index.html` : interface principale.
-- `assets/app.js` : logique métier offline-first, POS, stock, fabrication,
-  achats, clients, finance, RH, rôles, audit et synchronisation différée.
-- `assets/styles.css` : design responsive.
-- `manifest.webmanifest` et `service-worker.js` : installation PWA et cache
-  hors ligne.
-- `server.js` : serveur local sans dépendance npm.
+- consultation des quantités disponibles ;
+- suivi du stock par article et par emplacement ;
+- valorisation du stock ;
+- alertes lorsque le stock atteint le seuil minimum ;
+- ajustements manuels de stock ;
+- historique des mouvements : ventes, achats, ajustements, fabrication.
+
+## Fabrication
+
+Le module fabrication permet de gérer les produits fabriqués par la
+quincaillerie :
+
+- création d'ordres de fabrication ;
+- utilisation de nomenclatures ;
+- consommation automatique des matières premières ;
+- entrée automatique des produits finis en stock ;
+- suivi du statut de chaque ordre de fabrication ;
+- calcul du coût de production.
+
+## Achats et fournisseurs
+
+Le module achats permet d'enregistrer les réceptions fournisseurs :
+
+- gestion des fournisseurs ;
+- réception d'articles achetés ;
+- mise à jour automatique du stock au dépôt ;
+- enregistrement du coût d'achat ;
+- historique des achats récents.
+
+## Clients
+
+Le système permet de gérer le portefeuille clients :
+
+- création de nouveaux clients ;
+- enregistrement du téléphone et de la limite de crédit ;
+- suivi du solde estimé pour les ventes à crédit ;
+- sélection du client lors de la vente.
+
+## Finance et comptabilité
+
+Le module finance fournit un suivi simplifié compatible avec une organisation
+comptable de type OHADA :
+
+- suivi des ventes comptabilisées ;
+- suivi des achats comptabilisés ;
+- journal simplifié des écritures ;
+- export du journal en fichier CSV ;
+- base de travail pour le comptable.
+
+## Ressources humaines
+
+Le module RH permet de suivre les employés et leur contribution à la production :
+
+- liste des employés ;
+- rôle ou poste de chaque employé ;
+- taux horaire ;
+- saisie des heures travaillées sur un ordre de fabrication ;
+- calcul du coût de main-d'oeuvre lié à la production.
+
+## Administration
+
+Le module administration regroupe les paramètres essentiels :
+
+- rôles utilisateurs ;
+- accès par rôle ;
+- sites et emplacements ;
+- journal d'audit des actions importantes.
+
+## Rôles utilisateurs
+
+L'application propose plusieurs profils :
+
+- Administrateur ;
+- Caissier ;
+- Gestionnaire de stock ;
+- Responsable production ;
+- Comptable ;
+- Responsable RH.
+
+Chaque rôle donne accès uniquement aux modules nécessaires à son travail.
+
+## Fonctionnement hors ligne
+
+Le système est conçu pour les environnements où la connexion internet peut être
+instable :
+
+- l'application peut fonctionner comme PWA ;
+- les données sont conservées localement dans le navigateur ;
+- les ventes et mouvements peuvent être enregistrés même sans connexion ;
+- les opérations en attente sont placées dans une file de synchronisation ;
+- la synchronisation peut être déclenchée lorsque la connexion revient.
 
 ## Lancement local
 
-Avec Node.js :
+Dans le dossier du projet :
 
-```bash
+```powershell
 node server.js
 ```
 
@@ -62,7 +140,10 @@ Puis ouvrir :
 http://localhost:4173
 ```
 
-Identifiants de démonstration : aucun mot de passe n'est requis dans cette
-version locale. Utilisez le sélecteur de rôle en haut à droite pour tester les
-profils Administrateur, Caissier, Gestionnaire de stock, Production,
-Comptable et RH.
+Si Node.js n'est pas dans le PATH, utiliser le chemin complet du Node fourni par
+Codex :
+
+```powershell
+& "C:\Users\kamga\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe" server.js
+```
+
