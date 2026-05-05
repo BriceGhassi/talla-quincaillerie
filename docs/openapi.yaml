@@ -1,0 +1,372 @@
+openapi: 3.1.0
+info:
+  title: Talla Quincaillerie API
+  version: 1.0.0
+  description: REST API and synchronization contract for hardware store retail and manufacturing operations.
+servers:
+  - url: https://api.example.com/v1
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UUID:
+      type: string
+      format: uuid
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        details: { type: object }
+    LoginRequest:
+      type: object
+      required: [username, password, deviceCode]
+      properties:
+        username: { type: string }
+        password: { type: string, format: password }
+        deviceCode: { type: string }
+    LoginResponse:
+      type: object
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        expiresIn: { type: integer }
+        user: { type: object }
+        permissions:
+          type: array
+          items: { type: string }
+    Product:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        sku: { type: string }
+        barcode: { type: string }
+        name: { type: string }
+        unit: { type: string }
+        isManufactured: { type: boolean }
+        sellingPrice: { type: number }
+        standardCost: { type: number }
+        reorderLevel: { type: number }
+        version: { type: integer }
+    SaleCreate:
+      type: object
+      required: [locationId, deviceId, receiptNo, lines, payments, occurredAt]
+      properties:
+        locationId: { $ref: '#/components/schemas/UUID' }
+        deviceId: { $ref: '#/components/schemas/UUID' }
+        customerId: { $ref: '#/components/schemas/UUID' }
+        receiptNo: { type: string }
+        lines:
+          type: array
+          items:
+            type: object
+            required: [productId, quantity, unitPrice]
+            properties:
+              productId: { $ref: '#/components/schemas/UUID' }
+              quantity: { type: number }
+              unitPrice: { type: number }
+              discountAmount: { type: number }
+        payments:
+          type: array
+          items:
+            type: object
+            required: [method, amount]
+            properties:
+              method: { type: string, enum: [cash, mobile_money, card, bank, credit] }
+              amount: { type: number }
+              reference: { type: string }
+        occurredAt: { type: string, format: date-time }
+    SyncOperation:
+      type: object
+      required: [operationId, entityType, entityId, operationType, payload, occurredAt, idempotencyKey]
+      properties:
+        operationId: { $ref: '#/components/schemas/UUID' }
+        entityType: { type: string }
+        entityId: { $ref: '#/components/schemas/UUID' }
+        operationType: { type: string }
+        locationId: { $ref: '#/components/schemas/UUID' }
+        deviceId: { $ref: '#/components/schemas/UUID' }
+        baseVersion: { type: integer }
+        payload: { type: object }
+        occurredAt: { type: string, format: date-time }
+        idempotencyKey: { type: string }
+paths:
+  /auth/login:
+    post:
+      security: []
+      summary: Authenticate user and register device session.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LoginResponse' }
+  /auth/refresh:
+    post:
+      summary: Rotate refresh token and issue new access token.
+      responses:
+        '200': { description: Token refreshed }
+  /auth/logout:
+    post:
+      summary: Revoke current refresh token.
+      responses:
+        '204': { description: Logged out }
+  /bootstrap:
+    get:
+      summary: Download initial offline dataset for a device.
+      parameters:
+        - name: locationId
+          in: query
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '200': { description: Products, prices, stock snapshot, users, permissions, numbering policy }
+  /sync/pull:
+    get:
+      summary: Pull server changes since cursor.
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: locationId
+          in: query
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '200': { description: Ordered change feed and next cursor }
+  /sync/push:
+    post:
+      summary: Push deferred offline operations.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [operations]
+              properties:
+                operations:
+                  type: array
+                  items: { $ref: '#/components/schemas/SyncOperation' }
+      responses:
+        '200': { description: Accepted, rejected, and conflicted operations }
+  /products:
+    get:
+      summary: List products with search and barcode filters.
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: barcode
+          in: query
+          schema: { type: string }
+      responses:
+        '200': { description: Product list }
+    post:
+      summary: Create product.
+      responses:
+        '201': { description: Product created }
+  /products/{id}:
+    get:
+      summary: Get product.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '200': { description: Product }
+    patch:
+      summary: Update product.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '200': { description: Product updated }
+  /stock/balances:
+    get:
+      summary: List stock balances by product and location.
+      responses:
+        '200': { description: Stock balances }
+  /stock/movements:
+    get:
+      summary: List stock ledger movements.
+      responses:
+        '200': { description: Stock movements }
+    post:
+      summary: Create stock adjustment or transfer movement.
+      responses:
+        '201': { description: Movement created }
+  /stock/counts:
+    post:
+      summary: Create stock count.
+      responses:
+        '201': { description: Count created }
+  /sales:
+    get:
+      summary: List sales.
+      responses:
+        '200': { description: Sales }
+    post:
+      summary: Create sale or synced offline sale.
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SaleCreate' }
+      responses:
+        '201': { description: Sale posted }
+  /sales/{id}/return:
+    post:
+      summary: Return sale lines with optional manager approval.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '201': { description: Return posted }
+  /shifts/open:
+    post:
+      summary: Open cashier shift.
+      responses:
+        '201': { description: Shift opened }
+  /shifts/{id}/close:
+    post:
+      summary: Close cashier shift and reconcile cash.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '200': { description: Shift closed }
+  /customers:
+    get:
+      summary: List customers.
+      responses:
+        '200': { description: Customers }
+    post:
+      summary: Create customer.
+      responses:
+        '201': { description: Customer created }
+  /suppliers:
+    get:
+      summary: List suppliers.
+      responses:
+        '200': { description: Suppliers }
+    post:
+      summary: Create supplier.
+      responses:
+        '201': { description: Supplier created }
+  /purchase-orders:
+    get:
+      summary: List purchase orders.
+      responses:
+        '200': { description: Purchase orders }
+    post:
+      summary: Create purchase order.
+      responses:
+        '201': { description: Purchase order created }
+  /purchase-orders/{id}/receive:
+    post:
+      summary: Receive goods and create stock movements.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '200': { description: Goods received }
+  /boms:
+    get:
+      summary: List bills of material.
+      responses:
+        '200': { description: BOMs }
+    post:
+      summary: Create bill of material.
+      responses:
+        '201': { description: BOM created }
+  /production-orders:
+    get:
+      summary: List production orders.
+      responses:
+        '200': { description: Production orders }
+    post:
+      summary: Create production order.
+      responses:
+        '201': { description: Production order created }
+  /production-orders/{id}/transition:
+    post:
+      summary: Change production order state.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '200': { description: State updated }
+  /production-orders/{id}/consume:
+    post:
+      summary: Consume raw materials into production.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '201': { description: Consumption posted }
+  /production-orders/{id}/complete:
+    post:
+      summary: Receive finished goods into stock.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '201': { description: Production completed }
+  /reports/dashboard:
+    get:
+      summary: Get KPI dashboard.
+      responses:
+        '200': { description: Dashboard metrics }
+  /reports/export:
+    get:
+      summary: Export report as CSV or PDF.
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema: { type: string }
+        - name: format
+          in: query
+          required: true
+          schema: { type: string, enum: [csv, pdf] }
+      responses:
+        '200': { description: Report file }
+  /admin/users:
+    get:
+      summary: List users.
+      responses:
+        '200': { description: Users }
+    post:
+      summary: Create user.
+      responses:
+        '201': { description: User created }
+  /admin/audit-logs:
+    get:
+      summary: Search audit log.
+      responses:
+        '200': { description: Audit log entries }

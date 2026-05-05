@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1f5f5b" />
+    <title>Talla Quincaillerie - Gestion</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="assets/styles.css" />
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <aside class="sidebar" aria-label="Navigation principale">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">Q</div>
+          <div>
+            <strong>Talla Quincaillerie</strong>
+            <span>Quincaillerie & fabrication</span>
+          </div>
+        </div>
+        <nav id="nav" class="nav"></nav>
+        <div class="sidebar-footer">
+          <span id="syncStatus" class="status-dot">Hors ligne prêt</span>
+          <button class="ghost-button" id="seedReset" type="button" title="Réinitialiser les données de démonstration">
+            Réinitialiser
+          </button>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Système de gestion intégré</p>
+            <h1 id="pageTitle">Tableau de bord</h1>
+          </div>
+          <div class="topbar-actions">
+            <label class="select-label">
+              <span>Rôle</span>
+              <select id="roleSelect"></select>
+            </label>
+            <button id="syncButton" class="primary-button" type="button">Synchroniser</button>
+          </div>
+        </header>
+
+        <section id="view" class="view" aria-live="polite"></section>
+      </main>
+    </div>
+
+    <template id="iconTemplate">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="" />
+      </svg>
+    </template>
+
+    <script src="assets/app.js" defer></script>
+  </body>
+</html>
